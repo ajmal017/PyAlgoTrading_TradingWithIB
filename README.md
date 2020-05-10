@@ -1,4 +1,10 @@
 # PyAlgoTrading_TradingWithIB
 
 
-This repository contains excercises and my own progress in "Python Algo Trading with Interactive Brokers" course on UDEMY
+Option screeners with "ib_insync".
+
+Some "ib_insync" notebooks from "ib_insync" repo.
+
+Option screeners will evolve to have "plotly" interactive graphs eventually.
+
+Option screeners documentation is "TBD"

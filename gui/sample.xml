@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<!-- This is an example of a bull put screener parameters file
+Loading this file should have the effect of setting screener parameters
+to the values included in each of the "value" tags
+
+author: Sergio Espinoza
+sergio.espinoza.lopez@gmail.com
+-->
+ <!-- bul put screener parameter file -->
+  <BullPutScreener>
+
+  <!-- underlying screening parameters -->
+  <underlyings>
+    <parameter>
+      <!-- minimum market capital in USDM -->
+      <name>minMarketCap</name>
+      <value>5.95</value>
+    </parameter>
+
+    <parameter>
+      <!-- max number of constituents to consider for
+        further scanning, after ordering by market Cap,
+         if = 0 then ignore  -->
+      <name>constituentsSlice</name>
+      <value>0</value>
+    </parameter>
+
+    <parameter>
+      <!-- Minimmum average daily option volume
+            multiples of 1k  -->
+      <name>minOptionVolume</name>
+      <value>10</value>
+    </parameter>
+
+    <parameter>
+      <!-- min 52 weeks Implied Volatility Rank (%)  -->
+      <name>minIVRank</name>
+      <value>30</value>
+    </parameter>MinProfit
+
+    <parameter>
+      <!-- Minimum days to nenxt earning release -->
+      <name>minDaysToEarnings</name>
+      <value>30</value>
+    </parameter>
+
+
+
+  </underlyings>
+
+<!-- Strategy screening paramters -->
+  <strategy>
+
+    <parameter>
+      <!-- scan strikes under this % below
+                   market price for underlying -->
+      <name>pctUnderPx</name>
+      <value>15</value>
+    </parameter>
+
+    <parameter>
+      <!-- Number of monthly expiries to scan -->
+      <name>numMonthlyExpiries</name>
+      <value>0</value>
+    </parameter>
+
+    <parameter>
+      <!-- Maximum Loss  -->
+      <name>maxLoss</name>
+      <value>0</value>
+    </parameter>
+
+    <parameter>
+      <!-- Minimum Strategy profit -->
+      <name>minProfit</name>
+      <value>0</value>
+    </parameter>
+
+  </strategy>
+
+</BullPutScreener>

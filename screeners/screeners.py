@@ -39,7 +39,7 @@ __all__ = [ 'Screeners',
 class Screeners():
 
     "Available underlying screening parameters, to apply on "
-    _underlyingScreeningAvailParameters = [
+    _underlyingScreenerAvailParameters = [
         'min_market_cap',
         'constituents_slice',
         'min_option_volume',
@@ -47,8 +47,15 @@ class Screeners():
         'min_days_to_earnings'
     ]
 
+    _commonStrategyScreenerAvailParameters = [
+        'pct_px_range',
+        'num_month_expiries',
+        'max_loss',
+        'min_profit'
+    ]
 
-    _underlyings = []
+    _underlyingContracts = None
+
 
     def __init__( self, ib : IB ):
         self._Ib = ib
@@ -56,20 +63,20 @@ class Screeners():
         #self.bullPutScreener = BullPutScreener( ib )
 
     @classmethod
-    def setUnderlyings( cls, underlyings : List[ str ] ):
+    def setUnderlyings( cls, underlyingContracts : List[ Contract ] ):
         """
-            args:
-                underlyings : Ticker list of underlying to scan with
-                    unrelyingFilterParams. This could be, for example, the
-                    entire S&P500 index constituents
+            Args:
+                underlyings : Contract list of underlying to scan using
+                    option strategy screemner algorithm .
+                    Contracts can be scanned using 'executeUnderlyingScan'
         """
-        cls.underlyings = underlyings
+        cls._underlyingContracts = underlyingContracts
 
     def setUnderlyingScannerParameters( self, filterParams : Dict[ str, float] ):
         """
             provide screening parameter dictionary
-            args:
-                filterParams: Security filter parameters:
+            Args:
+                filterParams: Dictionary with security filter parameters, with key/value pairs:
                     {'min_market_cap' : float }    minimum market capital in USD Millions Dollars
                     { 'min_option_volume' : float }    minimum average daily option volume
                     { 'min_iv_rank' : float }  min 52 weeks Implied Volatility Rank (%)
@@ -78,32 +85,45 @@ class Screeners():
                                                      filters have been run
         """
         for (key, value) in filterParams.items():
-            if key not in self._underlyingScreeningAvailParameters:
+            if key not in self._underlyingScreenerAvailParameters:
                 assert False, f'underlying screener key {key} not supported!!!'
 
         self.underlyingScreenerParams = filterParams
 
-    def setBullPutScreenerParameters( self, filterParams : Dict[str,str]  ) -> List[str]:
+    def setCommmonStrategyScreenerParameters( self, filterParams : Dict[str,str]  ) -> List[str]:
         """
-            Set bull put screener parameters
-            List of parameters available in 'bullputverticals_scr' file
+            Set option strategy screener parameters common to all available strategies
+            Parameters will be set to every availablea option strategy screeners
+            Args:
+                filterParams: Dictionary, strategy filter parameters, with key/value pairs:
+                {"pct_under_px_range" : float } scan strikes under this % below market price for underlying
+                {"num_month_expiries" : float } monthly expires forward
+                {"max_loss" : float }  max loss
+                {"min_profit" : float }  min profit
         """
-        self.bullPutScreener.setFilterParameters( filterParams )
+        self._optionStrategyScreenerAvailParameters = filterParams
+        for (key, value) in filterParams.items():
+            if key not in self._commonStrategyScreenerAvailParameters:
+                assert False, f'strategy screener key {key} not supported!!!'
 
-    def executeUnderlyingScan( self ):
+    def executeUnderlyingScan( self ) -> List[Contract]:
 
-        logging.info( "** Executing underlying scanner **" )
+        logging.info( "** Executing underlying scan **" )
 
         try:
             minMarketCap = self.underlyingScreenerParams[ 'min_market_cap' ]
             minAvgOptionVolume = self.underlyingScreenerParams[ 'min_option_volume' ]
             minIvRank = self.underlyingScreenerParams[ 'min_iv_rank' ]
+            minDaysToEarnigns = self.underlyingScreenerParams[ 'min_days_to_earnings' ]
+
+            logging.info( f'First screening criteria: ' )
+            logging.info( f'Minimum market capital: {minMarketCap} ' )
+            logging.info( f'Minimum Avg Option Vol: {minMarketCap} ' )
+            logging.info( f'Minimum IV rank: {minMarketCap} ' )
+
 
         except KeyError:
             logging.error( 'Missing scanner parameter' )
-
-        #TODO: add min days to earnings
-        #self.underlyingScreenerParams[ 'min_days_to_earnings' ]
 
         try:
             # use IV rank scan / filter
@@ -114,13 +134,31 @@ class Screeners():
         except Exception as e:
             logging.error( e )
 
+        #build / qualify contracts
+        contracts = [ Stock( s, 'SMART' , currency='USD' ) for s in symbolList ]
+
+        qualifiedContracts = self._Ib.qualifyContracts( *contracts )
+
+        assert len(qualifiedContracts) == len(contracts), 'unable to qualify all contracts'
+
+        logging.info(f'{len(qualifiedContracts)} contracts qualify first screening criteria' )
+        # filter out 'min_days_to_earnings',
+        # 'Wall Street Horizon' subscription needed
+
+        logging.info( f'Next screening criteria:' )
+        logging.info( f'Minimum days to next earning report : {minDaysToEarnigns} ' )
+
+        contractList = ScreenerUtils.filterByUpcomingEarnings( qualifiedContracts, minDaysToEarnigns )
+
         if 'constituents_slice' in self.underlyingScreenerParams.keys():
             slice = int( self.underlyingScreenerParams[ 'constituents_slice' ] )
-            symbolList = symbolList[:slice]
+            contractList = contractList[:slice]
 
-        return symbolList
+        return contractList
 
+    def setErrorEventHandler( self, handler ):
+        self._Ib.errorEvent += handler
 
-    def runBullPutScreener( self ):
+    def executeBullPutScan( self ):
         logging.info( "Executing bull put stratery screener" )
         #TODO

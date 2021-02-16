@@ -162,6 +162,40 @@ def test_OptionChainsReq(fixture):
     logging.info( f'Sample option chain for { sampleKey[0] } : {chains[ sampleKey[0] ] }' )
 
 
+@pytest.mark.Screener
+@pytest.mark.Screener2
+def test_BullPutScreener(fixture):
+    contractList = []
+    comboList = []
+
+    logging.info( 'testgin bull put screener' )
+
+
+    securityFilters = {
+        'min_market_cap' : 30000000000,
+        'min_option_volume' : 10000,
+        'min_iv_rank' : 30,
+        'min_days_to_earnings' : 30,
+        'constituents_slice' : 20}
+
+    screeners = Screeners( ib )
+
+    screeners.setErrorEventHandler( pyTestIbErrorHandler )
+
+    screeners.setUnderlyingScannerParameters( securityFilters )
+
+    contractList = screeners.executeUnderlyingScan( )
+
+    logging.info( f"{len(ContractList)} unerlying contracts retreived" )
+
+    comboList = screeners.executeBullPutScan( )
+
+    logging.info( f"screener result with {len(comboList)} combo contracts" )
+
+
+
+
+
 
 def pyTestIbErrorHandler(  id : int, errorCode : int, errorMsg : str, c : Contract  ):
     logging.info( '***** ERROR RECEIVED IN PYTEST ERROR HANDLER!!! *****' )
